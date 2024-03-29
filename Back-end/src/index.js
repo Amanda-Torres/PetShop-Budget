@@ -1,22 +1,33 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
 const port = 4000;
 app.use(bodyParser.json());
+app.use(cors());
 
 // Rota que recebe os dados
 app.post('/orcamento', (req, res) => {
   const orcamento = req.body;
   const eFimDeSemana = verificarFimDeSemana(orcamento.data);
-  calcularPreco(eFimDeSemana, orcamento.cachorroP, orcamento.cachorroG);
-  console.log(orcamento);
-  res.send('Orçamento recebido com sucesso');
+  const resultado = calcularPreco(eFimDeSemana, orcamento.cachorroP, orcamento.cachorroG);
+  res.send(resultado);
 });
 
 // Inicia o servidor
 app.listen(port, () => {
 console.log(`Servidor rodando em http://localhost:${port}`);
 });
+
+function verificarFimDeSemana(inputData) {
+  var data = new Date(inputData);
+  
+  if (data.getDay() === 0 || data.getDay() === 6) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 //Adicionando os dados
 var petShops = {
@@ -32,33 +43,22 @@ var petShops = {
   },
 
   "Vai Rex": {
-    dados: [1.7, 15, 50, 24, 48],
+    dados: [1.7, 15, 50, 20, 55],
   },
 
   "ChowChawgas": {
-    dados: [0.800, 30, 45, 24, 48],
+    dados: [0.800, 30, 45, 30, 45],
   }
 };
 
 petShops["Meu Canino Feliz"].calcularAumento();
-
-function verificarFimDeSemana(inputData) {
-    var data = new Date(inputData);
-
-    if (data.getDay() === 5 || data.getDay() === 6) {
-      return true;
-    } else {
-      return false;
-    }
-}
 
 function calcularPreco(eFimDeSemana, cachorroP, cachorroG) {
   var totalPetshop1 = totalMeuCaninoFeliz(eFimDeSemana, cachorroP, cachorroG);
   var totalPetshop2 = totalVaiRex (eFimDeSemana, cachorroP, cachorroG);
   var totalPetshop3 = totalChowChawgas(eFimDeSemana, cachorroP, cachorroG);
   
-  var menorValor = encontrarMenorValor(totalPetshop1, totalPetshop2, totalPetshop3);
-  console.log("O menor número é:", menorValor);
+  return encontrarMenorValor(totalPetshop1, totalPetshop2, totalPetshop3);
 }
 
 //Calculos preço
@@ -67,14 +67,10 @@ function calcularPreco(eFimDeSemana, cachorroP, cachorroG) {
         var resultadoCachorroG = 0;
     if(eFimDeSemana){
         resultadoCachorroP = parseInt(petShops["Meu Canino Feliz"].dados[3]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["Meu Canino Feliz"].dados[4]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
       } else {
         resultadoCachorroP = parseInt(petShops["Meu Canino Feliz"].dados[1]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["Meu Canino Feliz"].dados[2]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
       }
       return resultadoCachorroP + resultadoCachorroG;
 }
@@ -84,14 +80,10 @@ function totalVaiRex(eFimDeSemana, qunatidadeCachorroP, quantidadeCachorroG){
         var resultadoCachorroG = 0;
     if(eFimDeSemana){
         resultadoCachorroP = parseInt(petShops["Vai Rex"].dados[3]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["Vai Rex"].dados[4]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
         } else {
         resultadoCachorroP = parseInt(petShops["Vai Rex"].dados[1]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["Vai Rex"].dados[2]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
       }
       return resultadoCachorroP + resultadoCachorroG;
 
@@ -102,14 +94,10 @@ function totalChowChawgas(eFimDeSemana, qunatidadeCachorroP, quantidadeCachorroG
         var resultadoCachorroG = 0;
     if(eFimDeSemana){
         resultadoCachorroP = parseInt(petShops["ChowChawgas"].dados[3]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["ChowChawgas"].dados[4]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
       } else {
         resultadoCachorroP = parseInt(petShops["ChowChawgas"].dados[1]) * parseInt(qunatidadeCachorroP);
-        console.log(resultadoCachorroP);
         resultadoCachorroG = parseInt(petShops["ChowChawgas"].dados[2]) * parseInt(quantidadeCachorroG);
-        console.log(resultadoCachorroG);
       }
       return resultadoCachorroP + resultadoCachorroG;
 }
@@ -117,41 +105,41 @@ function totalChowChawgas(eFimDeSemana, qunatidadeCachorroP, quantidadeCachorroG
 
 // Clacular menor valor
 function encontrarMenorValor(precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas) {
-  const menor = Math.min(precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas);
-  const iguais = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].filter(num => num === menor).length;
+  const relacaoIndexPetShop = {
+    0: "Meu Canino Feliz",
+    1: "Vai Rex",
+    2: "ChowChawgas"
+  };
+
+  var nomePetShop = "";
+
+  const menorPreco = Math.min(precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas);
+  const iguais = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].filter(num => num === menorPreco).length;
 
   if (iguais === 1) {
-      const indexMenor = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].indexOf(menor);
-      return {menor, indexMenor};
+      const indexMenor = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].indexOf(menorPreco);
+      nomePetShop = relacaoIndexPetShop[indexMenor];  
   } else if (iguais > 1) {
+    const posicoes = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].reduce((acc, curr, index) => {
+    if (curr === menorPreco) {
+        acc.push(index);
+    }
+    return acc;
+    }, []);
 
-      const posicoes = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].reduce((acc, curr, index) => {
-      if (curr === menor) {
-          acc.push(index);
+    var distancias = [];
+
+    posicoes.forEach(posicao => {
+      if (relacaoIndexPetShop[posicao]) {
+        distancias.push(petShops[relacaoIndexPetShop[posicao]].dados[0]);
       }
-      return acc;
-      }, []);
-      console.log(posicoes)
-      var menorDistancia = Math.min(distanciaMeuCaninoFeliz, distanciaVaiRex, distanciaChowChawgas);
-/* 
-      const indexMenor = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].indexOf(menor);
+    });
+    
+    const menorDistancia = Math.min(...distancias);
 
-      const iguais = [precoMeuCaninoFeliz, precoVaiRex, precoChowChawgas].filter(num => num === menor).length;
+    var indexMenorDistancia = posicoes[distancias.indexOf(menorDistancia)];
 
-      if () {
-
-      }
-
-
-
-      const distanciaMeuCaninoFeliz = parseFloat(petShops["Meu Canino Feliz"].dados[0]);
-      const distanciaVaiRex = parseFloat(petShops["Vai Rex"].dados[0]);
-      const distanciaChowChawgas = parseFloat(petShops["ChowChawgas"].dados[0]);
-
-      var menorDistancia = Math.min(distanciaMeuCaninoFeliz, distanciaVaiRex, distanciaChowChawgas);
-
-    return;
-  
-  } */
-}
+    nomePetShop = relacaoIndexPetShop[indexMenorDistancia];
+  }
+  return { nomePetShop, menorPreco };
 }
